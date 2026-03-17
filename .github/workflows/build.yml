@@ -1,0 +1,104 @@
+name: Build ImmortalWrt
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: ImmortalWrt branch
+        required: false
+        default: openwrt-24.10
+      ipk_urls:
+        description: Third-party IPK URLs separated by spaces, commas, or new lines
+        required: false
+        default: ""
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REPO_URL: https://github.com/immortalwrt/immortalwrt
+  REPO_BRANCH: openwrt-24.10
+  TZ: Asia/Shanghai
+  BUILD_DIR: ${{ github.workspace }}/workdir
+  CONFIG_FILE: ${{ github.workspace }}/.config
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 720
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Check config
+        run: |
+          test -f "$CONFIG_FILE" || {
+            echo ".config is missing in the repository root." >&2
+            exit 1
+          }
+
+      - name: Init environment
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo timedatectl set-timezone "$TZ"
+          sudo rm -rf /etc/apt/sources.list.d/dotnet* /usr/local/lib/android /opt/ghc
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang curl file flex bison g++ gawk gcc-multilib g++-multilib \
+            gettext git libncurses5-dev libssl-dev python3 python3-setuptools rsync \
+            swig unzip wget zlib1g-dev ccache
+
+      - name: Clone source
+        env:
+          BUILD_BRANCH: ${{ github.event.inputs.branch || env.REPO_BRANCH }}
+        run: |
+          git clone --single-branch --filter=blob:none -b "$BUILD_BRANCH" "$REPO_URL" "$BUILD_DIR"
+
+      - name: Run DIY part 1
+        run: |
+          chmod +x "$GITHUB_WORKSPACE/diy-part1.sh"
+          "$GITHUB_WORKSPACE/diy-part1.sh" "$BUILD_DIR"
+
+      - name: Update feeds
+        working-directory: ${{ env.BUILD_DIR }}
+        run: ./scripts/feeds update -a
+
+      - name: Install feeds
+        working-directory: ${{ env.BUILD_DIR }}
+        run: ./scripts/feeds install -a
+
+      - name: Run DIY part 2
+        env:
+          IPK_URLS: ${{ github.event.inputs.ipk_urls || '' }}
+        run: |
+          chmod +x "$GITHUB_WORKSPACE/diy-part2.sh"
+          "$GITHUB_WORKSPACE/diy-part2.sh" "$BUILD_DIR"
+
+      - name: Load config
+        run: cp "$CONFIG_FILE" "$BUILD_DIR/.config"
+
+      - name: Set defconfig
+        working-directory: ${{ env.BUILD_DIR }}
+        run: make defconfig
+
+      - name: Download sources
+        working-directory: ${{ env.BUILD_DIR }}
+        run: make download -j"$(nproc)"
+
+      - name: Build firmware
+        working-directory: ${{ env.BUILD_DIR }}
+        run: make -j"$(nproc)" || make -j1 V=s
+
+      - name: Upload firmware
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-${{ github.run_number }}
+          path: ${{ env.BUILD_DIR }}/bin/targets/**
+          if-no-files-found: ignore
+          retention-days: 7
