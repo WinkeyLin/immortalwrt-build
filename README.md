@@ -1,6 +1,10 @@
 # ImmortalWrt GitHub Actions 编译仓库
 
-这个仓库用于通过 GitHub Actions 自动编译 ImmortalWrt，并支持：
+通过 GitHub Actions 自动编译 ImmortalWrt
+
+Target: 零刻 GTR7 7840HS x86_64 for PVE
+
+## Feature
 
 - 默认编译 `openwrt-24.10` 分支
 - 使用仓库根目录的 `.config`
