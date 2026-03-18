@@ -6,7 +6,7 @@ on:
       branch:
         description: ImmortalWrt branch
         required: false
-        default: openwrt-24.10
+        default: openwrt-25.12
       ipk_urls:
         description: Third-party IPK URLs separated by spaces, commas, or new lines
         required: false
@@ -18,7 +18,7 @@ concurrency:
 
 env:
   REPO_URL: https://github.com/immortalwrt/immortalwrt
-  REPO_BRANCH: openwrt-24.10
+  REPO_BRANCH: openwrt-25.12
   TZ: Asia/Shanghai
   BUILD_DIR: ${{ github.workspace }}/workdir
   CONFIG_FILE: ${{ github.workspace }}/.config

@@ -6,7 +6,7 @@ Target: 零刻 GTR7 7840HS x86_64 for PVE
 
 ## Feature
 
-- 默认编译 `openwrt-24.10` 分支
+- 默认编译 `openwrt-25.12` 分支
 - 使用仓库根目录的 `.config`
 - 在 feeds 更新前执行 `diy-part1.sh`
 - 在 feeds 安装后执行 `diy-part2.sh`
@@ -28,9 +28,9 @@ Target: 零刻 GTR7 7840HS x86_64 for PVE
 
 ## 使用方法
 
-1. 把你本地生成好的 `.config` 放到仓库根目录，建议这份配置基于 `openwrt-24.10` 生成。
+1. 把你本地生成好的 `.config` 放到仓库根目录，建议这份配置基于 `openwrt-25.12` 生成。
 2. 将仓库推送到 GitHub。
-3. 在 GitHub 的 `Actions` 页面手动运行 `Build ImmortalWrt`，默认编译 `openwrt-24.10`。
+3. 在 GitHub 的 `Actions` 页面手动运行 `Build ImmortalWrt`，默认编译 `openwrt-25.12`。
 4. 固件默认后台地址为 `http://192.168.1.1` 或 `http://immortalwrt.lan`，默认用户名为 `root`，默认密码为空。
 5. 工作流会默认在编译前下载以下 `ipk`：
    - `luci-app-natfrp_amd64.ipk`
